@@ -1,0 +1,30 @@
+
+#test_button {
+	position: absolute;
+	top: 10px;
+	width: 100%;
+	text-align: center;
+	z-index: 1;
+	display: block;
+	background: transparent;
+	color: red;
+	border-color: transparent;
+	outline: none;
+}
+
+#keep_scrolling_button {
+	position: absolute;
+	bottom: 10px;
+	width: 100%;
+	text-align: center;
+	z-index: 0;
+	display: block;
+	background: transparent;
+	color: lightpink;
+	border-color: transparent;
+	outline: none;
+}
+
+*:focus {
+	outline:none;
+}
