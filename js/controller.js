@@ -1,6 +1,6 @@
 'use strict';
 
-import { DEBUG } from "./modules/globals.js"
+import { DEBUG, MAX_SCROLL_SPEED } from "./modules/globals.js"
 import { moveScrollPlane, addToAnimationQueue, render } from "./tejas.js"
 import { AnimateTask } from './modules/AnimateTask.js'
 
@@ -40,7 +40,12 @@ if (DEBUG) {
         mouse_wheel_text.parentElement.id = "mouse-wheel-text";
 } 
 
-window.addEventListener('mousewheel',  function (event)
-    {
-        if(DEBUG) mouse_wheel_text.textContent = `Mouse Wheel Delta: ${event.wheelDelta}`;
-    });
+window.addEventListener('mousewheel',  mouseWheelListener);
+
+export function mouseWheelListener( event ) {
+        if(DEBUG) mouse_wheel_text.textContent = `Mouse Wheel Del: ${event.wheelDelta}`;
+        let delta = (event.wheelDelta > MAX_SCROLL_SPEED) ? MAX_SCROLL_SPEED : 
+                    (event.wheelDelta < -MAX_SCROLL_SPEED) ? -MAX_SCROLL_SPEED: event.wheelDelta;
+        moveScrollPlane(delta);
+        render();
+}

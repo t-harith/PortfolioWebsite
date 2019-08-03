@@ -1,6 +1,7 @@
 'use strict';
 
 export const DEBUG = 1;
+export const MAX_SCROLL_SPEED = 200;
 
 const brown_palette = [0x372C2E, 0x563727, 0xFFFFFF, 0x7A431D, 0xDE9E48];
 const pinkgray_palette = [0x2C2B30, 0x4F4F51, 0xD6D6D6, 0xF2C4CE, 0xF58F7C];

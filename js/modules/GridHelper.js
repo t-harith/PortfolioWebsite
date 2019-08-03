@@ -61,6 +61,6 @@ GridHelper.prototype = Object.assign( Object.create( THREE.LineSegments.prototyp
 
         return new this.constructor().copy( this );
 
-    }
+    } 
 
 } );

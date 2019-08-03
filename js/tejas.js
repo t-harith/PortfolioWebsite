@@ -9,7 +9,7 @@
 
 'use strict';
 
-import { DEBUG } from './modules/globals.js';
+import { DEBUG, MAX_SCROLL_SPEED } from './modules/globals.js';
 import { COLOR_DARK, COLOR_MILD, COLOR_LIGHT, COLOR_BOLD, COLOR_ACCENT } from './modules/globals.js';
 import { Chunk } from './modules/Chunk.js';
 import { Vista } from './modules/Vista.js';
@@ -24,9 +24,10 @@ import {
         } from './modules/loaders.js'
 import { AnimateTask } from './modules/AnimateTask.js'
 import { GridHelper } from './modules/GridHelper.js'
+import { mouseWheelListener } from './controller.js'
 
 
-let scene, camera, renderer, roadMap, controls
+let scene, camera, renderer, road, roadMap, controls
 let animation_queue = []
 let scroll_plane
 
@@ -97,8 +98,10 @@ function loadRoadGrid() {
     // Make a grid the size of all the chunks + some overflow
 
     if (DEBUG == 1) console.log(`Making Road ${Chunk.total_length} long`)
-    let road = GridHelper(window.innerWidth/100, Chunk.total_length, 100, COLOR_MILD);
-    road.position.set(0, -window.innerHeight/2, 100*Chunk.total_length/2); 
+    road = GridHelper(window.innerWidth/100, Chunk.total_length, 100, COLOR_MILD);
+    road.position.set(0, -window.innerHeight/2, 100*Chunk.total_length/2 ); 
+    road.road_start = road.position.z - 100*Chunk.total_length/2;
+    road.road_end = road.position.z + 100*Chunk.total_length/2;
     scene.add(road)
 }
 
@@ -143,7 +146,40 @@ function animate() {
 // Exportables
 
 function moveScrollPlane( amt_z ) {
-   scroll_plane.position.setZ(scroll_plane.position.z + amt_z) 
+    // If scroll plane is outside road bounds, can only scroll it back in
+    if (scroll_plane.position.z < road.road_start ) {
+        if (amt_z > 0) scroll_plane.position.setZ(scroll_plane.position.z + amt_z)
+        else return;
+    }
+    else if (scroll_plane.position.z > road.road_end ) {
+        if (amt_z < 0) scroll_plane.position.setZ(scroll_plane.position.z + amt_z)
+        else return;
+    }
+
+    // Animate return of scroll plane to bounds. Begin animation just as scroll plane is leaving road bounds
+    if ( scroll_plane.position.z + amt_z < road.road_start) {
+        window.removeEventListener("mousewheel", mouseWheelListener);
+        scroll_plane.position.setZ( scroll_plane.position.z + amt_z)
+        addToAnimationQueue(new AnimateTask(
+            'scroll-plane-bounce-start', 
+            Math.ceil(Math.abs(scroll_plane.position.z)) - 1, 
+            0, 
+            true, 
+            (val) => { scroll_plane.position.setZ(scroll_plane.position.z+1) },
+            () => { window.addEventListener("mousewheel", mouseWheelListener)}))
+    }
+    else if (scroll_plane.position.z + amt_z > road.road_end ) {
+        window.removeEventListener("mousewheel", mouseWheelListener);
+        scroll_plane.position.setZ(scroll_plane.position.z + amt_z)
+        addToAnimationQueue(new AnimateTask(
+            'scroll-plane-bounce-end', 
+            Math.ceil(Math.abs(scroll_plane.position.z-road.road_end)) - 1, 
+            0, 
+            true, 
+            (val) => { scroll_plane.position.setZ(scroll_plane.position.z-1) },
+            () => { window.addEventListener("mousewheel", mouseWheelListener)}))
+    } 
+    else scroll_plane.position.setZ(scroll_plane.position.z + amt_z) 
 }
 
 function addToAnimationQueue( animate_task ) {
