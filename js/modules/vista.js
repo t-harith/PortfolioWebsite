@@ -1,4 +1,4 @@
-import { Chunk } from "./chunk.js"
+import { Chunk } from "./Chunk.js"
 
 'use strict';
 

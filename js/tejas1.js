@@ -123,7 +123,7 @@ let COLOR_ACCENT = palette[4];
 				cube.scale.set(100,100,100);
 				//console.log(geometry);
 			}, undefined,  (err)=> {console.log(err);});
-			console.log(cube);
+			//console.log(cube);
 			
 			//var cub2 = new THREE.Mesh(new THREE.BoxGeometry(400,400, 100), material);
 			//scene.add(cub2);
@@ -159,6 +159,7 @@ let COLOR_ACCENT = palette[4];
 			//var mesh;	
 			//scene.add(mesh_p);
 			scene.add(cube);
+			console.log(grid)
 			//camera.position.z = 2;
 			camera.lookAt(scene.position);
 			// camera.position.y = 200;
@@ -362,28 +363,28 @@ let COLOR_ACCENT = palette[4];
             
             }
 
-            GridHelper.prototype = Object.assign( Object.create( THREE.LineSegments.prototype ), {
+           // GridHelper.prototype = Object.assign( Object.create( THREE.LineSegments.prototype ), {
 
-                constructor: GridHelper, 
-            
-                copy: function ( source ) {
-            
-                    THREE.LineSegments.prototype.copy.call( this, source );
-            
-                    this.geometry.copy( source.geometry );
-                    this.material.copy( source.material );
-            
-                    return this;
-            
-                },
-            
-                clone: function () {
-            
-                    return new this.constructor().copy( this );
-            
-                }
-            
-            } );
+           //     constructor: GridHelper, 
+           // 
+           //     copy: function ( source ) {
+           // 
+           //         THREE.LineSegments.prototype.copy.call( this, source );
+           // 
+           //         this.geometry.copy( source.geometry );
+           //         this.material.copy( source.material );
+           // 
+           //         return this;
+           // 
+           //     },
+           // 
+           //     clone: function () {
+           // 
+           //         return new this.constructor().copy( this );
+           // 
+           //     }
+           // 
+           // } );
             
             
             function goop()

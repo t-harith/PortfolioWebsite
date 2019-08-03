@@ -11,8 +11,8 @@
 
 import { DEBUG } from './modules/globals.js';
 import { COLOR_DARK, COLOR_MILD, COLOR_LIGHT, COLOR_BOLD, COLOR_ACCENT } from './modules/globals.js';
-import { Chunk } from './modules/chunk.js';
-import { Vista } from './modules/vista.js';
+import { Chunk } from './modules/Chunk.js';
+import { Vista } from './modules/Vista.js';
 import { 
         loadLead, 
         loadTitle, 
@@ -22,9 +22,13 @@ import {
         loadProjects, 
         loadFuture 
         } from './modules/loaders.js'
+import { AnimateTask } from './modules/AnimateTask.js'
+import { GridHelper } from './modules/GridHelper.js'
 
 
-let scene, camera, renderer, roadMap
+let scene, camera, renderer, roadMap, controls
+let animation_queue = []
+let scroll_plane
 
 function initialize() {
     if (DEBUG == 1) console.log("In Init")
@@ -32,7 +36,16 @@ function initialize() {
     sceneSetup()
     cameraSetup()
     renderSetup()
+
+    initRoadMap()
+    loadRoadGrid()
+    loadScrollPlane()
     loadRoadMap()
+
+    if (DEBUG == 1) console.log("Initial Render of Scene")
+    controls = new THREE.OrbitControls(camera, renderer.domElement)
+    controls.addEventListener('change', render)
+    render()
 }
 
 function sceneSetup() {
@@ -43,7 +56,7 @@ function sceneSetup() {
 
 function cameraSetup() {
     if (DEBUG == 1) console.log("Camera Setup")
-    const camera_start = new THREE.Vector3( 0, 0, 1000 )
+    const camera_start = new THREE.Vector3( 0, 0, -1000 )
     let aspect = window.innerWidth/window.innerHeight
     camera = new THREE.OrthographicCamera(1000*(aspect/-2), 1000*(aspect/2), 1000/2, 1000/-2, -2000, 3000)
     camera.position.set(camera_start.x, camera_start.y, camera_start.z)
@@ -57,10 +70,16 @@ function renderSetup() {
     document.body.appendChild( renderer.domElement ); // Add renderer to <body>
 }
 
-function loadRoadMap() {
-    if (DEBUG == 1) console.log("Loading Roadmap")
+function initRoadMap() {
+    if (DEBUG == 1) console.log("Initializing Chunks in Roadmap")
     roadMap = [];
-
+    roadMap.end = 0;
+    roadMap.push = function() {
+        arguments[0].offset(roadMap.end);
+        roadMap.end += arguments[0].length(); 
+        return Array.prototype.push.apply(this, arguments);
+    }
+    
     // TODO: For now manually input new chunks here, later change to parsing a chunk file
     roadMap.push(new Chunk("Lead", 10, loadLead)) // Lead of runway
     roadMap.push(new Vista("Title", 5, 2.5, loadTitle)) // Name title
@@ -71,13 +90,75 @@ function loadRoadMap() {
     roadMap.push(new Chunk("Future", 100, loadFuture)) // Road work ahead 
 
     if (DEBUG == 1) console.log(`${Chunk.numChunks} chunks added to Roadmap`)
+}
+
+function loadRoadGrid() {
+    if (DEBUG == 1) console.log("Loading Road")
+    // Make a grid the size of all the chunks + some overflow
+
+    if (DEBUG == 1) console.log(`Making Road ${Chunk.total_length} long`)
+    let road = GridHelper(window.innerWidth/100, Chunk.total_length, 100, COLOR_MILD);
+    road.position.set(0, -window.innerHeight/2, 100*Chunk.total_length/2); 
+    scene.add(road)
+}
+
+function loadScrollPlane() {
+    if (DEBUG == 1) console.log("Loading Scroll Plane")
+    let scroll_plane_material = new THREE.MeshBasicMaterial( 
+        {
+            color: COLOR_ACCENT, 
+            transparent: true,  
+            opacity: 0.31
+        });
+    scroll_plane = new THREE.Mesh(new THREE.BoxGeometry(window.innerWidth,window.innerHeight,10), scroll_plane_material)
+    console.log(scroll_plane)
+    scene.add(scroll_plane)
+}
+
+function loadRoadMap() {
+    if (DEBUG == 1) console.log("Loading Roadmap")
    
     // TODO: Naive preloading all chunks here. In actuality should load when approaching them
     for (var i = 0; i < Chunk.numChunks; ++i) {
-        console.log(roadMap[i])
+        if (DEBUG == 1) console.log(roadMap[i])
         roadMap[i].load()
     }
     
 }
 
+function animate() {
+    if (animation_queue.length > 0 ) requestAnimationFrame(animate)
+    
+    for (var i = animation_queue.length-1; i >= 0 ; --i) {
+        animation_queue[i].animateTask();
+        if (animation_queue[i].getToPop()) {
+            animation_queue[i].animationDone()
+            animation_queue.splice(i, 1); //TODO: optimize from deleting middle of array
+        }
+    }
+
+    render()
+}
+
+// Exportables
+
+function moveScrollPlane( amt_z ) {
+   scroll_plane.position.setZ(scroll_plane.position.z + amt_z) 
+}
+
+function addToAnimationQueue( animate_task ) {
+    let call_animate = false;
+    if (animation_queue.length == 0) call_animate = true;
+    if (DEBUG == 1) console.log(`Adding task ${animate_task.getName()} to animation_queue`);
+    animation_queue.push(animate_task);
+    if (call_animate) animate()
+}
+
+function render() {
+    renderer.render(scene, camera);
+}
+
 $( document ).ready(initialize);
+
+// EXPORT functionality for controller to modify this model
+export { moveScrollPlane, addToAnimationQueue, render }

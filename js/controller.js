@@ -1,6 +1,8 @@
 'use strict';
 
 import { DEBUG } from "./modules/globals.js"
+import { moveScrollPlane, addToAnimationQueue, render } from "./tejas.js"
+import { AnimateTask } from './modules/AnimateTask.js'
 
 /*
  *  View Change Button
@@ -19,6 +21,11 @@ document.querySelector("#scroll-button").addEventListener('click', scrollStep)
 
 function scrollStep() {
     if(DEBUG) console.log("In scrollStep")
+    addToAnimationQueue(new AnimateTask("scroll-plane", 50, 0, true, callScroll ))
+}
+
+function callScroll( val ) {
+    moveScrollPlane(1)
 }
 
 /*
