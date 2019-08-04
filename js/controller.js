@@ -43,9 +43,9 @@ if (DEBUG) {
 window.addEventListener('mousewheel',  mouseWheelListener);
 
 export function mouseWheelListener( event ) {
-        if(DEBUG) mouse_wheel_text.textContent = `Mouse Wheel Del: ${event.wheelDelta}`;
         let delta = (event.wheelDelta > MAX_SCROLL_SPEED) ? MAX_SCROLL_SPEED : 
                     (event.wheelDelta < -MAX_SCROLL_SPEED) ? -MAX_SCROLL_SPEED: event.wheelDelta;
         moveScrollPlane(delta);
+        if(DEBUG) mouse_wheel_text.textContent = `Mouse Wheel Delta: ${delta}`;
         render();
 }

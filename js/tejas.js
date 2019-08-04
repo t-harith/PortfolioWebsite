@@ -114,6 +114,24 @@ function loadScrollPlane() {
             opacity: 0.31
         });
     scroll_plane = new THREE.Mesh(new THREE.BoxGeometry(window.innerWidth,window.innerHeight,10), scroll_plane_material)
+    scroll_plane.addAnimation = function ( anim_task ) {
+        // Only one animation task for scroll_plane at a time
+        if (this._anim_task != undefined) {
+            // If an animation task already exists, kill it and add the new task when first task terminates
+            this._anim_task.setToPop(true);
+            this._anim_task.animationDone = () => {
+                scroll_plane.removeAnimation();
+                scroll_plane._anim_task = anim_task;
+                addToAnimationQueue(scroll_plane._anim_task)
+            }
+        } else {
+            this._anim_task = anim_task;
+            addToAnimationQueue(this._anim_task)
+        }
+    }
+    scroll_plane.removeAnimation = function () {
+        this._anim_task = undefined;
+    }
     console.log(scroll_plane)
     scene.add(scroll_plane)
 }
@@ -133,10 +151,11 @@ function animate() {
     if (animation_queue.length > 0 ) requestAnimationFrame(animate)
     
     for (var i = animation_queue.length-1; i >= 0 ; --i) {
-        animation_queue[i].animateTask();
         if (animation_queue[i].getToPop()) {
             animation_queue[i].animationDone()
             animation_queue.splice(i, 1); //TODO: optimize from deleting middle of array
+        } else {
+            animation_queue[i].animateTask();
         }
     }
 
@@ -154,30 +173,33 @@ function moveScrollPlane( amt_z ) {
     else if (scroll_plane.position.z > road.road_end ) {
         if (amt_z < 0) scroll_plane.position.setZ(scroll_plane.position.z + amt_z)
         else return;
-    }
-
+    } 
     // Animate return of scroll plane to bounds. Begin animation just as scroll plane is leaving road bounds
-    if ( scroll_plane.position.z + amt_z < road.road_start) {
-        window.removeEventListener("mousewheel", mouseWheelListener);
+    else if ( scroll_plane.position.z + amt_z < road.road_start) {
         scroll_plane.position.setZ( scroll_plane.position.z + amt_z)
-        addToAnimationQueue(new AnimateTask(
+        scroll_plane.addAnimation( new AnimateTask(
             'scroll-plane-bounce-start', 
             Math.ceil(Math.abs(scroll_plane.position.z)) - 1, 
             0, 
             true, 
-            (val) => { scroll_plane.position.setZ(scroll_plane.position.z+1) },
-            () => { window.addEventListener("mousewheel", mouseWheelListener)}))
+            (frame_num) => { 
+                scroll_plane.position.setZ(Math.ceil(scroll_plane.position.z)+1);
+                if (scroll_plane.position.z > road.road_start) scroll_plane._anim_task.setToPop(true) 
+                },
+            () => { scroll_plane.removeAnimation() }))
     }
     else if (scroll_plane.position.z + amt_z > road.road_end ) {
-        window.removeEventListener("mousewheel", mouseWheelListener);
         scroll_plane.position.setZ(scroll_plane.position.z + amt_z)
-        addToAnimationQueue(new AnimateTask(
+        scroll_plane.addAnimation( new AnimateTask(
             'scroll-plane-bounce-end', 
             Math.ceil(Math.abs(scroll_plane.position.z-road.road_end)) - 1, 
             0, 
             true, 
-            (val) => { scroll_plane.position.setZ(scroll_plane.position.z-1) },
-            () => { window.addEventListener("mousewheel", mouseWheelListener)}))
+            (frame_num) => { 
+                scroll_plane.position.setZ(Math.ceil(scroll_plane.position.z)-1) 
+                if (scroll_plane.position.z < road.road_end) scroll_plane._anim_task.setToPop(true) 
+                },
+            () => { scroll_plane.removeAnimation() }))
     } 
     else scroll_plane.position.setZ(scroll_plane.position.z + amt_z) 
 }
