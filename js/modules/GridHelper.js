@@ -3,7 +3,6 @@
 import { DEBUG } from "./globals.js"
 
 export function GridHelper( numx, numy, step, col ) {
-    if (DEBUG == 1) console.log("In GridHelper")
     const halfSizeX = (numx*step) / 2;
     const halfSizeY = (numy*step) / 2;
     let color = new THREE.Color(col);

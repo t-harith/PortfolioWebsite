@@ -9,7 +9,7 @@
 
 'use strict';
 
-import { DEBUG, MAX_SCROLL_SPEED } from './modules/globals.js';
+import { DEBUG, MAX_SCROLL_SPEED, GRID_STEP_SZ } from './modules/globals.js';
 import { COLOR_DARK, COLOR_MILD, COLOR_LIGHT, COLOR_BOLD, COLOR_ACCENT } from './modules/globals.js';
 import { Chunk } from './modules/Chunk.js';
 import { Vista } from './modules/Vista.js';
@@ -61,6 +61,7 @@ function cameraSetup() {
     let aspect = window.innerWidth/window.innerHeight
     camera = new THREE.OrthographicCamera(1000*(aspect/-2), 1000*(aspect/2), 1000/2, 1000/-2, -2000, 3000)
     camera.position.set(camera_start.x, camera_start.y, camera_start.z)
+    camera.updateProjectionMatrix();
     if (DEBUG == 1) console.log(`Camera is at (${camera.position.x}, ${camera.position.y}, ${camera.position.z}).`)
 }
 
@@ -96,12 +97,13 @@ function initRoadMap() {
 function loadRoadGrid() {
     if (DEBUG == 1) console.log("Loading Road")
     // Make a grid the size of all the chunks + some overflow
-
+    // floor and ceil being used so that scroll plane meshes well with road grid and no broken grid squares
     if (DEBUG == 1) console.log(`Making Road ${Chunk.total_length} long`)
-    road = GridHelper(window.innerWidth/100, Chunk.total_length, 100, COLOR_MILD);
-    road.position.set(0, -window.innerHeight/2, 100*Chunk.total_length/2 ); 
-    road.road_start = road.position.z - 100*Chunk.total_length/2;
-    road.road_end = road.position.z + 100*Chunk.total_length/2;
+    road = GridHelper(Math.ceil(window.innerWidth/GRID_STEP_SZ), Chunk.total_length, GRID_STEP_SZ, COLOR_MILD);
+    road.name = "road"
+    road.position.set(0, GRID_STEP_SZ*Math.floor(-window.innerHeight/GRID_STEP_SZ)/2, GRID_STEP_SZ*Chunk.total_length/2 ); 
+    road.road_start = road.position.z - GRID_STEP_SZ*Chunk.total_length/2;
+    road.road_end = road.position.z + GRID_STEP_SZ*Chunk.total_length/2;
     scene.add(road)
 }
 
@@ -113,7 +115,11 @@ function loadScrollPlane() {
             transparent: true,  
             opacity: 0.31
         });
-    scroll_plane = new THREE.Mesh(new THREE.BoxGeometry(window.innerWidth,window.innerHeight,10), scroll_plane_material)
+    scroll_plane = new THREE.Mesh(new THREE.BoxGeometry(
+        GRID_STEP_SZ*Math.ceil(window.innerWidth/GRID_STEP_SZ),
+        GRID_STEP_SZ*Math.ceil(window.innerHeight/GRID_STEP_SZ)
+        ,10), scroll_plane_material)
+    scroll_plane.name = "scroll-plane"
     scroll_plane.addAnimation = function ( anim_task ) {
         // Only one animation task for scroll_plane at a time
         if (this._anim_task != undefined) {
@@ -162,7 +168,21 @@ function animate() {
     render()
 }
 
-// Exportables
+/*
+ *  Helpers
+ */
+
+function addToAnimationQueue( animate_task) {
+    let call_animate = false;
+    if (animation_queue.length == 0) call_animate = true;
+    if (DEBUG == 1) console.log(`Adding task ${animate_task.getName()} to animation_queue`);
+    animation_queue.push(animate_task);
+    if (call_animate) animate()
+}
+
+/*
+ *  Exportables
+ */
 
 function moveScrollPlane( amt_z ) {
     // If scroll plane is outside road bounds, can only scroll it back in
@@ -204,12 +224,39 @@ function moveScrollPlane( amt_z ) {
     else scroll_plane.position.setZ(scroll_plane.position.z + amt_z) 
 }
 
-function addToAnimationQueue( animate_task ) {
-    let call_animate = false;
-    if (animation_queue.length == 0) call_animate = true;
-    if (DEBUG == 1) console.log(`Adding task ${animate_task.getName()} to animation_queue`);
-    animation_queue.push(animate_task);
-    if (call_animate) animate()
+function updateCameraView(aspect) {
+    camera.left = -1000 * aspect/2;
+    camera.right = 1000 * aspect/2;
+    camera.top = 1000/2;
+    camera.bottom = -1000/2; 
+    camera.updateProjectionMatrix();
+}
+
+function updateRendererSize(width, height) {
+    renderer.setSize( width, height);
+}
+
+function updateScrollPlaneDims(width, height, depth) {
+    scroll_plane.scale.x = width/scroll_plane.geometry.parameters.width
+    scroll_plane.scale.y = height/scroll_plane.geometry.parameters.height
+    scroll_plane.scale.z = depth/scroll_plane.geometry.parameters.depth
+}
+
+function updateRoadDims(width, height) {
+    scene.remove(road);
+    road = GridHelper(width/GRID_STEP_SZ, Chunk.total_length, GRID_STEP_SZ, COLOR_MILD);
+    road.name = "road"
+    road.position.set(0, -height/2, GRID_STEP_SZ*Chunk.total_length/2 ); 
+    road.road_start = road.position.z - GRID_STEP_SZ*Chunk.total_length/2;
+    road.road_end = road.position.z + GRID_STEP_SZ*Chunk.total_length/2;
+    for(var i = 0; i < roadMap.length; ++i) {
+        roadMap[i].updateDims()
+    }
+    scene.add(road)
+}
+
+function animateScrollPlane(anim_task) {
+    scroll_plane.addAnimation(anim_task)
 }
 
 function render() {
@@ -219,4 +266,5 @@ function render() {
 $( document ).ready(initialize);
 
 // EXPORT functionality for controller to modify this model
-export { moveScrollPlane, addToAnimationQueue, render }
+export { moveScrollPlane, animateScrollPlane, render }
+export { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims }

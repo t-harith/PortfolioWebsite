@@ -1,7 +1,8 @@
 'use strict';
 
-import { DEBUG, MAX_SCROLL_SPEED } from "./modules/globals.js"
-import { moveScrollPlane, addToAnimationQueue, render } from "./tejas.js"
+import { DEBUG, MAX_SCROLL_SPEED, GRID_STEP_SZ } from "./modules/globals.js"
+import { moveScrollPlane, animateScrollPlane, render } from "./tejas.js"
+import { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims } from "./tejas.js"
 import { AnimateTask } from './modules/AnimateTask.js'
 
 /*
@@ -21,7 +22,7 @@ document.querySelector("#scroll-button").addEventListener('click', scrollStep)
 
 function scrollStep() {
     if(DEBUG) console.log("In scrollStep")
-    addToAnimationQueue(new AnimateTask("scroll-plane", 50, 0, true, callScroll ))
+    animateScrollPlane(new AnimateTask("scroll-plane", 50, 0, true, callScroll ))
 }
 
 function callScroll( val ) {
@@ -48,4 +49,23 @@ export function mouseWheelListener( event ) {
         moveScrollPlane(delta);
         if(DEBUG) mouse_wheel_text.textContent = `Mouse Wheel Delta: ${delta}`;
         render();
+}
+
+/*
+ *  Window Resize
+ */
+window.addEventListener('resize', windowResizeListener , false);
+
+export function windowResizeListener( event ) {
+    const aspect = window.innerWidth/window.innerHeight;
+    updateCameraView(aspect)
+    updateRendererSize(window.innerWidth, window.innerHeight) 
+    updateScrollPlaneDims(
+        GRID_STEP_SZ*Math.ceil(window.innerWidth/GRID_STEP_SZ) ,
+        GRID_STEP_SZ*Math.ceil(window.innerHeight/GRID_STEP_SZ),
+        10)
+    updateRoadDims(
+        GRID_STEP_SZ*Math.ceil(window.innerWidth/GRID_STEP_SZ) ,
+        GRID_STEP_SZ*Math.ceil(window.innerHeight/GRID_STEP_SZ))
+    render()
 }

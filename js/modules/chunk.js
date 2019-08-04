@@ -30,6 +30,10 @@ export class Chunk {
     length() {
         return this._length;
     }
+
+    updateDims() {
+        //TODO: Implement resize window updates
+    }
     
     static get numChunks() {
         return Chunk.num_chunks;
