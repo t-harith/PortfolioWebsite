@@ -6,7 +6,7 @@ export const GRID_STEP_SZ = 100;
 
 const brown_palette = [0x372C2E, 0x563727, 0xFFFFFF, 0x7A431D, 0xDE9E48];
 const pinkgray_palette = [0x2C2B30, 0x4F4F51, 0xD6D6D6, 0xF2C4CE, 0xF58F7C];
-let palette = pinkgray_palette;
+let palette = brown_palette;
 const COLOR_DARK = palette[0];
 const COLOR_MILD = palette[1];
 const COLOR_LIGHT = palette[2];

@@ -16,6 +16,7 @@ export class Chunk {
     load() {
         if (DEBUG == 1) console.log(`Loading chunk ${this._name}`)
         // TODO: Ideally would do parsing of a chunk file
+        this._load()
         this.loadAssets()
     }
 
@@ -24,7 +25,12 @@ export class Chunk {
     }
 
     offset(new_offset) {
-        this._offset = new_offset;
+        if(new_offset != undefined) this._offset = new_offset;
+        return this._offset;
+    }
+
+    end() {
+        return this._offset + this._length;
     }
 
     length() {
@@ -33,6 +39,10 @@ export class Chunk {
 
     updateDims() {
         //TODO: Implement resize window updates
+    }
+
+    getName() {
+        return this._name;
     }
     
     static get numChunks() {

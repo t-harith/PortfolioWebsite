@@ -1,8 +1,8 @@
 'use strict';
 
 import { DEBUG, MAX_SCROLL_SPEED, GRID_STEP_SZ } from "./modules/globals.js"
-import { moveScrollPlane, animateScrollPlane, render } from "./tejas.js"
-import { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims } from "./tejas.js"
+import { moveScrollPlane, animateScrollPlane, render } from "./modules/model.js"
+import { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims } from "./modules/model.js"
 import { AnimateTask } from './modules/AnimateTask.js'
 
 /*
@@ -19,10 +19,9 @@ function viewChange() {
  *  Scroll Button
  */
 document.querySelector("#scroll-button").addEventListener('click', scrollStep)
-
+//TODO: Edge case where scroll button is clicked while in road end/ road start bounce animation
 function scrollStep() {
-    if(DEBUG) console.log("In scrollStep")
-    animateScrollPlane(new AnimateTask("scroll-plane", 50, 0, true, callScroll ))
+    animateScrollPlane(new AnimateTask("scroll-button-clicked", 50, 0, true, callScroll ))
 }
 
 function callScroll( val ) {
