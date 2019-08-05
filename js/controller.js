@@ -1,6 +1,6 @@
 'use strict';
 
-import { DEBUG, MAX_SCROLL_SPEED, GRID_STEP_SZ } from "./modules/globals.js"
+import { DEBUG, MAX_BACK_SCROLL_SPEED, MAX_FORW_SCROLL_SPEED, GRID_STEP_SZ } from "./modules/globals.js"
 import { moveScrollPlane, animateScrollPlane, render } from "./modules/model.js"
 import { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims } from "./modules/model.js"
 import { AnimateTask } from './modules/AnimateTask.js'
@@ -43,10 +43,10 @@ if (DEBUG) {
 window.addEventListener('mousewheel',  mouseWheelListener);
 
 export function mouseWheelListener( event ) {
-        let delta = (event.wheelDelta > MAX_SCROLL_SPEED) ? MAX_SCROLL_SPEED : 
-                    (event.wheelDelta < -MAX_SCROLL_SPEED) ? -MAX_SCROLL_SPEED: event.wheelDelta;
+        let delta = (event.wheelDelta > MAX_FORW_SCROLL_SPEED) ? MAX_FORW_SCROLL_SPEED : 
+                    (event.wheelDelta < -MAX_BACK_SCROLL_SPEED) ? -MAX_BACK_SCROLL_SPEED: event.wheelDelta;
         moveScrollPlane(delta);
-        if(DEBUG) mouse_wheel_text.textContent = `Mouse Wheel Delta: ${delta}`;
+        if(DEBUG == 1) mouse_wheel_text.textContent = `Mouse Wheel Delta: ${delta}`;
         render();
 }
 

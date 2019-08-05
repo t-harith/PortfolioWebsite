@@ -1,5 +1,6 @@
 'use strict';
 
+
 export class AnimateTask {
     constructor( name, num_keyframes, start_keyframe, one_shot, callback_fn, anim_done_fn) {
         this._name = name;

@@ -1,6 +1,6 @@
 'use strict';
 
-import { DEBUG, MAX_SCROLL_SPEED, GRID_STEP_SZ } from './globals.js';
+import { DEBUG,  GRID_STEP_SZ, setMAX_SCROLL_SPEED, STANDARD_CHUNK_SCROLL_SPEED } from './globals.js';
 import { COLOR_DARK, COLOR_MILD, COLOR_LIGHT, COLOR_BOLD, COLOR_ACCENT } from './globals.js';
 import { Chunk } from './Chunk.js';
 import { Vista } from './Vista.js';
@@ -15,6 +15,9 @@ import {
         } from './loaders.js'
 import { AnimateTask } from './AnimateTask.js'
 import { GridHelper } from './GridHelper.js'
+import { sandwichFn } from './utility.js'
+
+const camera_start = new THREE.Vector3( 0, 0, -1000 )
 
 let animation_queue = []
 let scroll_plane
@@ -28,7 +31,6 @@ function sceneSetup() {
 
 function cameraSetup() {
     if (DEBUG == 1) console.log("Camera Setup")
-    const camera_start = new THREE.Vector3( 0, 0, -1000 )
     let aspect = window.innerWidth/window.innerHeight
     camera = new THREE.OrthographicCamera(1000*(aspect/-2), 1000*(aspect/2), 1000/2, 1000/-2, -2000, 3000)
     camera.position.set(camera_start.x, camera_start.y, camera_start.z)
@@ -48,19 +50,18 @@ function initRoadMap() {
     roadMap = [];
     roadMap.end = 0;
     roadMap.push = function() {
-        arguments[0].offset(roadMap.end);
         roadMap.end += arguments[0].length(); 
         return Array.prototype.push.apply(this, arguments);
     }
     
     // TODO: For now manually input new chunks here, later change to parsing a chunk file
-    roadMap.push(new Chunk("Lead", 10, loadLead)) // Lead of runway
-    roadMap.push(new Vista("Title", 5, 2.5, loadTitle)) // Name title
-    roadMap.push(new Chunk("Title -> About Me", 50, loadTransTitleAbt)) // Transition: title -> about me
-    roadMap.push(new Vista("About Me", 10, 5, loadAboutMe)) // About Me
-    roadMap.push(new Chunk("About Me -> Projects", 20, loadTransAbtProj)) // Transition: about me -> projects
-    roadMap.push(new Vista("Projects", 20, 10, loadProjects)) // Projects
-    roadMap.push(new Chunk("Future", 100, loadFuture)) // Road work ahead 
+    roadMap.push(new Chunk("Lead", 10, roadMap.end, loadLead)) // Lead of runway
+    roadMap.push(new Vista("Title", 20, 10, roadMap.end, loadTitle)) // Name title
+    roadMap.push(new Chunk("Title -> About Me", 50, roadMap.end, loadTransTitleAbt)) // Transition: title -> about me
+    roadMap.push(new Vista("About Me", 20, 5, roadMap.end, loadAboutMe)) // About Me
+    roadMap.push(new Chunk("About Me -> Projects", 20, roadMap.end, loadTransAbtProj)) // Transition: about me -> projects
+    roadMap.push(new Vista("Projects", 20, 15, roadMap.end, loadProjects)) // Projects
+    roadMap.push(new Chunk("Future", 100, roadMap.end, loadFuture)) // Road work ahead 
 
     if (DEBUG == 1) console.log(`${Chunk.numChunks} chunks added to Roadmap`)
 }
@@ -80,6 +81,7 @@ function loadRoadGrid() {
 
 function loadScrollPlane() {
     if (DEBUG == 1) console.log("Loading Scroll Plane")
+    setMAX_SCROLL_SPEED(STANDARD_CHUNK_SCROLL_SPEED);
     let scroll_plane_material = new THREE.MeshBasicMaterial( 
         {
             color: COLOR_ACCENT, 
@@ -94,6 +96,7 @@ function loadScrollPlane() {
     scroll_plane.road_map_idx = 0;
     scroll_plane.position.setZ = (val) => { 
         scroll_plane.position.z = val;
+        camera.position.z = val + camera_start.z
         if(scroll_plane.road_map_idx < (roadMap.length - 1) &&
             scroll_plane.position.z/GRID_STEP_SZ > roadMap[scroll_plane.road_map_idx].end()) {
             leaveRoadChunk(scroll_plane.road_map_idx++)
@@ -164,13 +167,7 @@ function animate() {
  *  Helpers
  */
 
-function addToAnimationQueue( animate_task) {
-    let call_animate = false;
-    if (animation_queue.length == 0) call_animate = true;
-    if (DEBUG == 1) console.log(`Adding task ${animate_task.getName()} to animation_queue`);
-    animation_queue.push(animate_task);
-    if (call_animate) animate()
-}
+
 
 function leaveRoadChunk( road_map_idx ) {
     console.log(`Leaving road chunk ${roadMap[road_map_idx].getName()}`)
@@ -262,9 +259,25 @@ function updateRoadDims(width, height) {
     scene.add(road)
 }
 
+function addToAnimationQueue( animate_task) {
+    let call_animate = false;
+    if (animation_queue.length == 0) call_animate = true;
+    if (DEBUG == 1) console.log(`Adding task ${animate_task.getName()} to animation_queue`);
+    animation_queue.push(animate_task);
+    if (call_animate) animate()
+}
+
 function animateScrollPlane(anim_task) {
-    anim_task.animationDone = () => { scroll_plane.removeAnimation() }
+    console.log(anim_task)
+    anim_task.animationDone = sandwichFn(anim_task.animationDone.bind(anim_task), 
+        ()=>{},
+        scroll_plane.removeAnimation.bind(scroll_plane))
+
     scroll_plane.addAnimation(anim_task)
+}
+
+function getCurrentScrollPos() {
+    return scroll_plane.position.z;
 }
 
 function render() {
@@ -272,7 +285,7 @@ function render() {
 }
 
 // EXPORT functionality for controller to modify this model
-export { moveScrollPlane, animateScrollPlane, render }
+export { addToAnimationQueue, moveScrollPlane, animateScrollPlane, getCurrentScrollPos, render }
 export { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims }
 export { 
         sceneSetup, 

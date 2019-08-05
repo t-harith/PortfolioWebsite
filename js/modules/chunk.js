@@ -3,11 +3,11 @@
 import { DEBUG } from './globals.js';
 
 export class Chunk {
-    constructor(name, length, onload) {
+    constructor(name, length, offset, onload) {
         this._length = length;
         this._name = name;
         this._load = onload;
-        this._offset = 0; 
+        this._offset = offset; 
         
         Chunk.num_chunks++;
         Chunk.total_length += length;

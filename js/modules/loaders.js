@@ -16,8 +16,8 @@ function loadTitle()
 {
     // TODO: Can set onArrival here, and for all other Vista blocks
     if (DEBUG == 1) console.log("Loading Title Chunk")
-    this.onArrival = sandwichFn(this.onArrival, () => {console.log(`Arriving ${this.getName()}`)})
-    this.onDeparture = sandwichFn(this.onDeparture, undefined, () => {console.log(`Departing ${this.getName()}`)})
+    this.onArrival = sandwichFn(this.onArrival.bind(this), () => {console.log(`Arriving ${this.getName()}`)})
+    this.onDeparture = sandwichFn(this.onDeparture.bind(this), ()=>{}, () => {console.log(`Departing ${this.getName()}`)})
 }
 
 function loadTransTitleAbt()

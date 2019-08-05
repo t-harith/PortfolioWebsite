@@ -10,7 +10,7 @@ export function sandwichFn( middleFn, doBefore =()=>{}, doAfter =()=>{}) {
     else // Add the new arrival functionality after the 'b'ase arrival functionality
         return function() {
             doBefore()
-            sandwichFn()
+            middleFn()
             doAfter()
         }
 }

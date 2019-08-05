@@ -16,7 +16,7 @@
 
 'use strict';
 
-import { DEBUG, MAX_SCROLL_SPEED, GRID_STEP_SZ } from './modules/globals.js';
+import { DEBUG } from './modules/globals.js';
 import { 
     sceneSetup, 
     cameraSetup, 
@@ -44,7 +44,7 @@ function initialize() {
     loadRoadMap()
 
     render()
-    genControls() 
+    if (DEBUG ==1) genControls() 
     swooshEntry()
 }
 
