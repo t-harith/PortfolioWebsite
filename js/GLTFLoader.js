@@ -22,13 +22,12 @@ THREE.GLTFLoader = ( function () {
 		crossOrigin: 'anonymous',
 
 		load: function ( url, onLoad, onProgress, onError ) {
-
 			var scope = this;
-
+			
 			var path = this.path !== undefined ? this.path : THREE.LoaderUtils.extractUrlBase( url );
 
-			var loader = new THREE.FileLoader( scope.manager );
-
+			var loader = new THREE.FileLoader( scope.manager )
+			
 			loader.setResponseType( 'arraybuffer' );
 
 			loader.load( url, function ( data ) {

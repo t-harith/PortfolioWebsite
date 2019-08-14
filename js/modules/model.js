@@ -5,13 +5,13 @@ import { COLOR_DARK, COLOR_MILD, COLOR_LIGHT, COLOR_BOLD, COLOR_ACCENT } from '.
 import { Chunk } from './Chunk.js';
 import { Vista } from './Vista.js';
 import { 
-        loadLead, 
-        loadTitle, 
-        loadTransTitleAbt, 
-        loadAboutMe, 
-        loadTransAbtProj, 
-        loadProjects, 
-        loadFuture 
+        initLead, 
+        initTitle, 
+        initTransTitleAbt, 
+        initAboutMe, 
+        initTransAbtProj, 
+        initProjects, 
+        initFuture 
         } from './loaders.js'
 import { AnimateTask } from './AnimateTask.js'
 import { GridHelper } from './GridHelper.js'
@@ -21,7 +21,7 @@ const camera_start = new THREE.Vector3( 0, 0, -1000 )
 
 let animation_queue = []
 let scroll_plane
-let scene, camera, renderer, road, roadMap, controls
+let scene, camera, renderer, road, roadMap, loader, controls
 
 function sceneSetup() {
     if (DEBUG == 1) console.log("Scene Setup")
@@ -42,7 +42,15 @@ function renderSetup() {
     if (DEBUG == 1) console.log("Renderer Setup")
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.localClippingEnabled = false;
     document.body.appendChild( renderer.domElement ); // Add renderer to <body>
+}
+
+function loadLoader() {
+    if (DEBUG == 1) console.log("Loading GLTF Loader")
+    //loader = new THREE.GLTFLoader()
+    loader = new THREE.GCodeLoader()
+    loader.splitLayer = true;
 }
 
 function initRoadMap() {
@@ -55,13 +63,13 @@ function initRoadMap() {
     }
     
     // TODO: For now manually input new chunks here, later change to parsing a chunk file
-    roadMap.push(new Chunk("Lead", 10, roadMap.end, loadLead)) // Lead of runway
-    roadMap.push(new Vista("Title", 20, 10, roadMap.end, loadTitle)) // Name title
-    roadMap.push(new Chunk("Title -> About Me", 50, roadMap.end, loadTransTitleAbt)) // Transition: title -> about me
-    roadMap.push(new Vista("About Me", 20, 5, roadMap.end, loadAboutMe)) // About Me
-    roadMap.push(new Chunk("About Me -> Projects", 20, roadMap.end, loadTransAbtProj)) // Transition: about me -> projects
-    roadMap.push(new Vista("Projects", 20, 15, roadMap.end, loadProjects)) // Projects
-    roadMap.push(new Chunk("Future", 100, roadMap.end, loadFuture)) // Road work ahead 
+    roadMap.push(new Chunk("Lead", 10, roadMap.end, initLead)) // Lead of runway
+    roadMap.push(new Vista("Title", 20, 10, roadMap.end, initTitle)) // Name title
+    roadMap.push(new Chunk("Title -> About Me", 50, roadMap.end, initTransTitleAbt)) // Transition: title -> about me
+    roadMap.push(new Vista("About Me", 20, 5, roadMap.end, initAboutMe)) // About Me
+    roadMap.push(new Chunk("About Me -> Projects", 20, roadMap.end, initTransAbtProj)) // Transition: about me -> projects
+    roadMap.push(new Vista("Projects", 20, 15, roadMap.end, initProjects)) // Projects
+    roadMap.push(new Chunk("Future", 100, roadMap.end, initFuture)) // Road work ahead 
 
     if (DEBUG == 1) console.log(`${Chunk.numChunks} chunks added to Roadmap`)
 }
@@ -91,7 +99,7 @@ function loadScrollPlane() {
     scroll_plane = new THREE.Mesh(new THREE.BoxGeometry(
         GRID_STEP_SZ*Math.ceil(window.innerWidth/GRID_STEP_SZ),
         GRID_STEP_SZ*Math.ceil(window.innerHeight/GRID_STEP_SZ)
-        ,10), scroll_plane_material)
+        ,100), scroll_plane_material)
     scroll_plane.name = "scroll-plane"
     scroll_plane.road_map_idx = 0;
     scroll_plane.position.setZ = (val) => { 
@@ -159,7 +167,6 @@ function animate() {
             animation_queue[i].animateTask();
         }
     }
-
     render()
 }
 
@@ -167,15 +174,83 @@ function animate() {
  *  Helpers
  */
 
-
+function grabMesh( gltf ) {
+    if (DEBUG == 1) console.log('Grabbing Mesh')
+    var num = 71;
+    console.log(gltf.children[num])
+    var geom = gltf.children[num].geometry.attributes.position.array
+    var shape_pts = [];
+    var shapes = [];
+    var a,b;
+    for ( var i = 0; i < geom.length-5; i+=6)
+    {
+        console.log(`A: ${geom[i]} \t \t ${geom[i+1]}`)
+        console.log(`B: ${geom[i+3]} \t \t ${geom[i+4]}`)
+        a = new THREE.Vector2(geom[i], geom[i+1])
+        b = new THREE.Vector2(geom[i+3], geom[i+4])
+        if ( a.x == b.x && a.y == b.y ) {
+            if ( shape_pts.length != 0 ) {
+                shapes.push(shape_pts.splice(0))
+                shape_pts = []
+                shape_pts.push(a)
+            }
+            else {
+                shape_pts.push(a)
+            }
+        } else {
+            shape_pts.push(b)
+        }
+    }
+    shapes.push(shape_pts.splice(0))
+    console.log(shapes)
+    var shapesG = [];
+    var shapesB = [];
+    for (var i = 0; i < shapes.length; ++i) {
+        shapesG.push(new THREE.Shape(shapes[i]));
+    }
+    for (var i = 0; i < shapesG.length; ++i) {
+        shapesB.push(new THREE.ShapeBufferGeometry(shapesG[i]));
+    }
+    for (var i = 0; i < shapesB.length; ++i) {
+        scene.add(new THREE.Mesh(shapesB[i], new THREE.MeshPhongMaterial({color: COLOR_ACCENT, side: THREE.DoubleSide})))
+    }
+    scene.add(gltf.children[num]) 
+    return
+    let mesh_arr = [];
+    gltf.scene.traverse( function (node) { if(node.isMesh) { 
+        node.material = new THREE.MeshBasicMaterial( 
+			{
+				side: THREE.DoubleSide,
+				color: COLOR_ACCENT, 
+				wireframe: true
+            } );
+        node.scale.set(100,100,100);
+        mesh_arr.push(node); 
+    } });
+    return mesh_arr;
+}
 
 function leaveRoadChunk( road_map_idx ) {
-    console.log(`Leaving road chunk ${roadMap[road_map_idx].getName()}`)
+    if (DEBUG == 1) console.log(`Leaving road chunk ${roadMap[road_map_idx].getName()}`)
+    // load meshes
+    for (var i = 0; i < roadMap[road_map_idx]._mesh_array.length; ++i) {
+        scene.remove(roadMap[road_map_idx]._mesh_array[i]);
+    }
     if (roadMap[road_map_idx].onDeparture != undefined) roadMap[road_map_idx].onDeparture();
 }
 
 function enterRoadChunk( road_map_idx ) {
-    console.log(`Entering road chunk ${roadMap[road_map_idx].getName()}`)
+    if (DEBUG == 1) console.log(`Entering road chunk ${roadMap[road_map_idx].getName()}`)
+    // load meshes
+    for (var i = 0; i < roadMap[road_map_idx]._mesh_array.length; ++i) {
+        var mesh = roadMap[road_map_idx]._mesh_array[i];
+        //scene.add(mesh);
+        var sp = new ThreeBSP(scroll_plane);
+        mesh.geometry = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
+        scene.add(mesh)
+        var ms = new ThreeBSP(mesh);
+        scene.add((sp.intersect(ms)).toMesh())
+    }
     if (roadMap[road_map_idx].onArrival != undefined) roadMap[road_map_idx].onArrival();
 }
 
@@ -280,12 +355,21 @@ function getCurrentScrollPos() {
     return scroll_plane.position.z;
 }
 
+function loaderLoad(path, caller) {
+    loader.load(
+        path, 
+        (gltf) => { caller.addMeshes(grabMesh(gltf)); }, 
+        undefined, 
+        (err)=>{console.log(`Error in loaderLoad ${err}`)}
+        )
+}
+
 function render() {
     renderer.render(scene, camera);
 }
 
 // EXPORT functionality for controller to modify this model
-export { addToAnimationQueue, moveScrollPlane, animateScrollPlane, getCurrentScrollPos, render }
+export { addToAnimationQueue, moveScrollPlane, animateScrollPlane, getCurrentScrollPos, render, loaderLoad}
 export { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims }
 export { 
         sceneSetup, 
@@ -294,7 +378,8 @@ export {
         initRoadMap, 
         loadRoadGrid, 
         loadScrollPlane, 
-        loadRoadMap, 
+        loadRoadMap,
+        loadLoader, 
         genControls, 
         swooshEntry
     }

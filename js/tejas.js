@@ -25,6 +25,7 @@ import {
     loadRoadGrid, 
     loadScrollPlane, 
     loadRoadMap, 
+    loadLoader, 
     genControls, 
     render,
     swooshEntry
@@ -37,6 +38,7 @@ function initialize() {
     sceneSetup()
     cameraSetup()
     renderSetup()
+    loadLoader()
 
     initRoadMap()
     loadRoadGrid()

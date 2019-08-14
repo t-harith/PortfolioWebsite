@@ -1,6 +1,7 @@
 'use strict';
 
-import { DEBUG } from './globals.js';
+import { DEBUG, GRID_STEP_SZ } from './globals.js';
+import { loaderLoad } from './model.js';
 
 export class Chunk {
     constructor(name, length, offset, onload) {
@@ -8,6 +9,9 @@ export class Chunk {
         this._name = name;
         this._load = onload;
         this._offset = offset; 
+        this._assets_path = [];
+        this._assets_names = [];
+        this._mesh_array = [];
         
         Chunk.num_chunks++;
         Chunk.total_length += length;
@@ -20,8 +24,27 @@ export class Chunk {
         this.loadAssets()
     }
 
+    addAssetPath(path) {
+        this._assets_path.push(path)
+    }
+    
+    addAsset(asset_fname) {
+        this._assets_names.push(asset_fname)
+    }
+
     loadAssets() {
         if (DEBUG == 1) console.log(`Loading chunk ${this._name} assets`)
+        for (var i = 0; i < this._assets_names.length; ++i) {
+            // TODO: functionality for multiple paths
+            loaderLoad(this._assets_path[0].concat(this._assets_names[i]), this)  
+        }
+    }
+
+    addMeshes(new_meshes) {
+        if (DEBUG == 1) console.log(`Adding meshes to chunk ${this._name}`)
+        this._mesh_array.push(...new_meshes)
+        for (var i = 0; i < this._mesh_array.length; ++i) 
+            this._mesh_array[i].position.setZ(this._mesh_array[i].position.z + this._offset*GRID_STEP_SZ);
     }
 
     offset(new_offset) {

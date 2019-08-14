@@ -35,8 +35,7 @@ let COLOR_ACCENT = palette[4];
             
 			
 			
-			var clipPlanes = [ new THREE.Plane(new THREE.Vector3(0, 0, -1), 1000)] ;
-            var button = document.getElementById("test_button");
+            var button = document.getElementById("view-button");
 			button.addEventListener('click', function (event) {
 				if(state)
 				{
@@ -104,6 +103,7 @@ let COLOR_ACCENT = palette[4];
 			var geometry = new THREE.DodecahedronGeometry(200, 3);
 			//var geometry = new THREE.Geometry(); 	
 			var loader = new THREE.GLTFLoader();
+			console.log(loader)
             var cube =  new THREE.Mesh();
 
 			
@@ -112,7 +112,7 @@ let COLOR_ACCENT = palette[4];
 			{
 				//gltf.scene.traverse( function (node) { if(node.isMesh) { mesh = node; } });
 				mesh = gltf.scene.children[0];
-				//console.log(gltf);
+				console.log(gltf);
 				//console.log(mesh);
 				// button.innerHTML = "TEST";
 				mesh.scale.set(100,100,100);

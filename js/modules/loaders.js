@@ -7,47 +7,51 @@
 import { DEBUG } from "./globals.js"
 import { sandwichFn } from "./utility.js"
 
-function loadLead()
+function initLead()
 {
-    if (DEBUG == 1) console.log("Loading Lead Chunk")
+    if (DEBUG == 1) console.log("Initializing Lead Chunk")
 }
 
-function loadTitle()
+function initTitle()
 {
     // TODO: Can set onArrival here, and for all other Vista blocks
-    if (DEBUG == 1) console.log("Loading Title Chunk")
+    if (DEBUG == 1) console.log("Initializing Title Chunk")
     this.onArrival = sandwichFn(this.onArrival.bind(this), () => {console.log(`Arriving ${this.getName()}`)})
     this.onDeparture = sandwichFn(this.onDeparture.bind(this), ()=>{}, () => {console.log(`Departing ${this.getName()}`)})
+
+    this.addAssetPath('3d_files/') 
+    //this.addAsset('tribot2.glb')
+    this.addAsset('PPHBED_city.gcode')
 }
 
-function loadTransTitleAbt()
+function initTransTitleAbt()
 {
 
-    if (DEBUG == 1) console.log("Loading Title -> About Me Chunk")
+    if (DEBUG == 1) console.log("Initializing Title -> About Me Chunk")
 }
 
-function loadAboutMe()
+function initAboutMe()
 {
 
-    if (DEBUG == 1) console.log("Loading About Me Chunk")
+    if (DEBUG == 1) console.log("Initializing About Me Chunk")
 }
 
-function loadTransAbtProj()
+function initTransAbtProj()
 {
 
-    if (DEBUG == 1) console.log("Loading About Me -> Projects Chunk")
+    if (DEBUG == 1) console.log("Initializing About Me -> Projects Chunk")
 }
 
-function loadProjects()
+function initProjects()
 {
 
-    if (DEBUG == 1) console.log("Loading Projects Chunk")
+    if (DEBUG == 1) console.log("Initializing Projects Chunk")
 }
 
-function loadFuture()
+function initFuture()
 {
 
-    if (DEBUG == 1) console.log("Loading Future Chunk")
+    if (DEBUG == 1) console.log("Initializing Future Chunk")
 }
 
-export { loadLead, loadTitle, loadTransTitleAbt, loadAboutMe, loadTransAbtProj, loadProjects, loadFuture }
+export { initLead, initTitle, initTransTitleAbt, initAboutMe, initTransAbtProj, initProjects, initFuture }
