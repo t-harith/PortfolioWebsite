@@ -21,7 +21,7 @@ function initTitle()
 
     this.addAssetPath('3d_files/') 
     //this.addAsset('tribot2.glb')
-    this.addAsset('PPHBED_city.gcode')
+    this.addAsset('PPHBED_tribot.gcode')
 }
 
 function initTransTitleAbt()

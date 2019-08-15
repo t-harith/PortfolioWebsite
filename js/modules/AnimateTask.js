@@ -7,6 +7,7 @@ export class AnimateTask {
         this._num_keyframes = num_keyframes;
         this._one_shot = one_shot;
         this._callback_fn = callback_fn;
+        this._start_keyframe = start_keyframe;
         this._current_frame = start_keyframe;
         this._to_pop = false;
         this._anim_done_fn = anim_done_fn;

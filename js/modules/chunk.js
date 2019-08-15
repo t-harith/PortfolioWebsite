@@ -1,7 +1,8 @@
 'use strict';
 
 import { DEBUG, GRID_STEP_SZ } from './globals.js';
-import { loaderLoad } from './model.js';
+import { loaderLoad, addToAnimationQueue } from './model.js';
+import { AnimateTask } from './AnimateTask.js';
 
 export class Chunk {
     constructor(name, length, offset, onload) {
