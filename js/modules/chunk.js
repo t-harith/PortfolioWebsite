@@ -12,6 +12,7 @@ export class Chunk {
         this._assets_path = [];
         this._assets_names = [];
         this._mesh_array = [];
+        this._prev_loc = undefined;
         
         Chunk.num_chunks++;
         Chunk.total_length += length;
@@ -43,8 +44,28 @@ export class Chunk {
     addMeshes(new_meshes) {
         if (DEBUG == 1) console.log(`Adding meshes to chunk ${this._name}`)
         this._mesh_array.push(...new_meshes)
-        for (var i = 0; i < this._mesh_array.length; ++i) 
-            this._mesh_array[i].position.setZ(this._mesh_array[i].position.z + this._offset*GRID_STEP_SZ);
+        for (var i = 0; i < this._mesh_array.length; ++i) {
+            this._mesh_array[i].position.setZ(this._mesh_array[i].position.z + this._offset*GRID_STEP_SZ+i);
+        }
+    }
+
+    genDisplayMeshes(scene) {
+        this.meshDisplay = function(scroll_plane) {
+            let sp_rel_pos = Math.abs(Math.floor(scroll_plane.position.z - GRID_STEP_SZ*this.offset()))
+            if (this._mesh_array.length >  sp_rel_pos) {
+                if ( this._prev_loc != undefined ) scene.remove(this._mesh_array[this._prev_loc])
+                scene.add(this._mesh_array[ this._prev_loc = sp_rel_pos])
+            } else
+                this.clearLastMesh(scene)
+        }
+        return this.meshDisplay.bind(this)
+    }
+
+    clearLastMesh(scene) {
+        if (this._prev_loc != undefined ){ 
+            scene.remove(this._mesh_array[this._prev_loc])
+            this._prev_loc = undefined
+        }
     }
 
     offset(new_offset) {

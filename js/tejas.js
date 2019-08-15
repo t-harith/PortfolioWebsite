@@ -12,6 +12,7 @@
  *      [ ] Swoosh scroll entry 
  *      [ ] Chunk load on scroll arrival
  *      [ ] HTML text placement overlay
+ *      [ ] Implement GLTF Loading for 3D view
  */
 
 'use strict';

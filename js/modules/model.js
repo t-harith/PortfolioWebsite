@@ -102,21 +102,31 @@ function loadScrollPlane() {
         ,100), scroll_plane_material)
     scroll_plane.name = "scroll-plane"
     scroll_plane.road_map_idx = 0;
-    scroll_plane.position.setZ = (val) => { 
-        scroll_plane.position.z = val;
-        camera.position.z = val + camera_start.z
-        if(scroll_plane.road_map_idx < (roadMap.length - 1) &&
-            scroll_plane.position.z/GRID_STEP_SZ > roadMap[scroll_plane.road_map_idx].end()) {
-            leaveRoadChunk(scroll_plane.road_map_idx++)
-            enterRoadChunk(scroll_plane.road_map_idx)
-        }
-        else if (scroll_plane.road_map_idx > 0 &&
-            scroll_plane.position.z/GRID_STEP_SZ < roadMap[scroll_plane.road_map_idx].offset()) {
-            leaveRoadChunk(scroll_plane.road_map_idx--)
-            enterRoadChunk(scroll_plane.road_map_idx)
+    scroll_plane.listeners = [];
+    scroll_plane.addListener = (func) => { 
+        func.id = (scroll_plane.listeners.length == 0) ? 1 : 
+            scroll_plane.listeners[scroll_plane.listeners.length-1].id + 1
+        scroll_plane.listeners.push(func)
+        return func.id;
+    }
+    scroll_plane.removeListener = (func) => {
+        if ( func == undefined ) return; 
+        else { 
+            for ( var i = 0; i < scroll_plane.listeners.length; ++i ) {
+                if ( scroll_plane.listeners[i].id == func.id ) {
+                    scroll_plane.listeners.splice(i,1)
+                    return
+                }
+            }
         }
     }
-    console.log(scroll_plane.position)
+    scroll_plane.addListener((sp) => {camera.position.z = sp.position.z + camera_start.z})
+    scroll_plane.position.setZ = (val) => { 
+        scroll_plane.position.z = val;
+        for ( var i = 0; i < scroll_plane.listeners.length; ++i)
+            if(scroll_plane.listeners[i] != undefined) scroll_plane.listeners[i](scroll_plane);
+    }
+    console.log(scroll_plane)
     scroll_plane.addAnimation = function ( anim_task ) {
         // Only one animation task for scroll_plane at a time
         if (this._anim_task != undefined) {
@@ -135,7 +145,6 @@ function loadScrollPlane() {
     scroll_plane.removeAnimation = function () {
         this._anim_task = undefined;
     }
-    console.log(scroll_plane)
     scene.add(scroll_plane)
 }
 
@@ -147,6 +156,19 @@ function loadRoadMap() {
         if (DEBUG == 1) console.log(roadMap[i])
         roadMap[i].load()
     }
+    
+    scroll_plane.addListener((sp) => {
+        if(sp.road_map_idx < (roadMap.length - 1) &&
+            sp.position.z/GRID_STEP_SZ > roadMap[sp.road_map_idx].end()) {
+            leaveRoadChunk(sp.road_map_idx++)
+            enterRoadChunk(sp.road_map_idx)
+        }
+        else if (sp.road_map_idx > 0 &&
+            sp.position.z/GRID_STEP_SZ < roadMap[sp.road_map_idx].offset()) {
+            leaveRoadChunk(sp.road_map_idx--)
+            enterRoadChunk(sp.road_map_idx)
+        }
+    })
     
 }
 
@@ -174,83 +196,36 @@ function animate() {
  *  Helpers
  */
 
-function grabMesh( gltf ) {
+function grabMesh( gcode ) {
     if (DEBUG == 1) console.log('Grabbing Mesh')
-    var num = 71;
-    console.log(gltf.children[num])
-    var geom = gltf.children[num].geometry.attributes.position.array
-    var shape_pts = [];
-    var shapes = [];
-    var a,b;
-    for ( var i = 0; i < geom.length-5; i+=6)
-    {
-        console.log(`A: ${geom[i]} \t \t ${geom[i+1]}`)
-        console.log(`B: ${geom[i+3]} \t \t ${geom[i+4]}`)
-        a = new THREE.Vector2(geom[i], geom[i+1])
-        b = new THREE.Vector2(geom[i+3], geom[i+4])
-        if ( a.x == b.x && a.y == b.y ) {
-            if ( shape_pts.length != 0 ) {
-                shapes.push(shape_pts.splice(0))
-                shape_pts = []
-                shape_pts.push(a)
-            }
-            else {
-                shape_pts.push(a)
-            }
-        } else {
-            shape_pts.push(b)
-        }
-    }
-    shapes.push(shape_pts.splice(0))
-    console.log(shapes)
-    var shapesG = [];
-    var shapesB = [];
-    for (var i = 0; i < shapes.length; ++i) {
-        shapesG.push(new THREE.Shape(shapes[i]));
-    }
-    for (var i = 0; i < shapesG.length; ++i) {
-        shapesB.push(new THREE.ShapeBufferGeometry(shapesG[i]));
-    }
-    for (var i = 0; i < shapesB.length; ++i) {
-        scene.add(new THREE.Mesh(shapesB[i], new THREE.MeshPhongMaterial({color: COLOR_ACCENT, side: THREE.DoubleSide})))
-    }
-    scene.add(gltf.children[num]) 
-    return
-    let mesh_arr = [];
-    gltf.scene.traverse( function (node) { if(node.isMesh) { 
-        node.material = new THREE.MeshBasicMaterial( 
-			{
-				side: THREE.DoubleSide,
-				color: COLOR_ACCENT, 
-				wireframe: true
-            } );
-        node.scale.set(100,100,100);
-        mesh_arr.push(node); 
-    } });
-    return mesh_arr;
+    // TODO: Implement GLTF Loading for 3D view
+    //let mesh_arr = [];
+    //gltf.scene.traverse( function (node) { if(node.isMesh) { 
+    //    node.material = new THREE.MeshBasicMaterial( 
+	//		{
+				//side: THREE.DoubleSide,
+				//color: COLOR_ACCENT, 
+				//wireframe: true
+    //        } );
+    //    node.scale.set(100,100,100);
+    //    mesh_arr.push(node); 
+    //} });
+    return gcode.children;
 }
 
 function leaveRoadChunk( road_map_idx ) {
     if (DEBUG == 1) console.log(`Leaving road chunk ${roadMap[road_map_idx].getName()}`)
     // load meshes
-    for (var i = 0; i < roadMap[road_map_idx]._mesh_array.length; ++i) {
-        scene.remove(roadMap[road_map_idx]._mesh_array[i]);
-    }
+    scroll_plane.removeListener(roadMap[road_map_idx].meshDisplay)
+    roadMap[road_map_idx].clearLastMesh(scene);
     if (roadMap[road_map_idx].onDeparture != undefined) roadMap[road_map_idx].onDeparture();
 }
 
 function enterRoadChunk( road_map_idx ) {
     if (DEBUG == 1) console.log(`Entering road chunk ${roadMap[road_map_idx].getName()}`)
     // load meshes
-    for (var i = 0; i < roadMap[road_map_idx]._mesh_array.length; ++i) {
-        var mesh = roadMap[road_map_idx]._mesh_array[i];
-        //scene.add(mesh);
-        var sp = new ThreeBSP(scroll_plane);
-        mesh.geometry = new THREE.Geometry().fromBufferGeometry(mesh.geometry);
-        scene.add(mesh)
-        var ms = new ThreeBSP(mesh);
-        scene.add((sp.intersect(ms)).toMesh())
-    }
+    var id = scroll_plane.addListener(roadMap[road_map_idx].genDisplayMeshes(scene))
+    roadMap[road_map_idx].meshDisplay.id  = id
     if (roadMap[road_map_idx].onArrival != undefined) roadMap[road_map_idx].onArrival();
 }
 
@@ -358,7 +333,7 @@ function getCurrentScrollPos() {
 function loaderLoad(path, caller) {
     loader.load(
         path, 
-        (gltf) => { caller.addMeshes(grabMesh(gltf)); }, 
+        (gcode) => { caller.addMeshes(grabMesh(gcode)); }, 
         undefined, 
         (err)=>{console.log(`Error in loaderLoad ${err}`)}
         )
