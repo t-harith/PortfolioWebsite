@@ -46,13 +46,17 @@ export class Chunk {
         if (DEBUG == 1) console.log(`Adding meshes to chunk ${this._name}`)
         this._mesh_array.push(...new_meshes)
         for (var i = 0; i < this._mesh_array.length; ++i) {
-            this._mesh_array[i].position.setZ(this._mesh_array[i].position.z + this._offset*GRID_STEP_SZ+i);
+            this._mesh_array[i].position.setZ(this._mesh_array[i].position.z +200+ this._offset*GRID_STEP_SZ+i);
+            console.log(this._mesh_array[i]) 
         }
     }
 
     genDisplayMeshes(scene) {
         this.meshDisplay = function(scroll_plane) {
+            //TODO: Support both GCODE and GLTF in same chunk
             let sp_rel_pos = Math.abs(Math.floor(scroll_plane.position.z - GRID_STEP_SZ*this.offset()))
+            if(this._mesh_array.length > 0 & this._mesh_array.parent != scene) 
+                scene.add(this._mesh_array[0])
             if (this._mesh_array.length >  sp_rel_pos) {
                 if ( this._prev_loc != undefined ) scene.remove(this._mesh_array[this._prev_loc])
                 scene.add(this._mesh_array[ this._prev_loc = sp_rel_pos])

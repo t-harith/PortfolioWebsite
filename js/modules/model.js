@@ -18,10 +18,12 @@ import { GridHelper } from './GridHelper.js'
 import { sandwichFn } from './utility.js'
 
 const camera_start = new THREE.Vector3( 0, 0, -1000 )
+const State = { TWO_D: 2, THREE_D: 3 }
+const MeshType = { GLTF: 0, GCODE: 1}
 
 let animation_queue = []
 let scroll_plane
-let scene, camera, renderer, road, roadMap, loader, controls
+let scene, camera, renderer, road, roadMap, loader, controls, state
 
 function sceneSetup() {
     if (DEBUG == 1) console.log("Scene Setup")
@@ -32,10 +34,11 @@ function sceneSetup() {
 function cameraSetup() {
     if (DEBUG == 1) console.log("Camera Setup")
     let aspect = window.innerWidth/window.innerHeight
-    camera = new THREE.OrthographicCamera(1000*(aspect/-2), 1000*(aspect/2), 1000/2, 1000/-2, -2000, 3000)
+    camera = new THREE.OrthographicCamera(1000*(aspect/-2), 1000*(aspect/2), 1000/2, 1000/-2, -10, 10)
     camera.position.set(camera_start.x, camera_start.y, camera_start.z)
     camera.updateProjectionMatrix();
     if (DEBUG == 1) console.log(`Camera is at (${camera.position.x}, ${camera.position.y}, ${camera.position.z}).`)
+    state = State.TWO_D;
 }
 
 function renderSetup() {
@@ -48,8 +51,8 @@ function renderSetup() {
 
 function loadLoader() {
     if (DEBUG == 1) console.log("Loading GLTF Loader")
-    //loader = new THREE.GLTFLoader()
-    loader = new THREE.GCodeLoader()
+    loader = new THREE.GLTFLoader()
+    //loader = new THREE.GCodeLoader()
     loader.splitLayer = true;
 }
 
@@ -84,6 +87,7 @@ function loadRoadGrid() {
     road.position.set(0, GRID_STEP_SZ*Math.floor(-window.innerHeight/GRID_STEP_SZ)/2, GRID_STEP_SZ*Chunk.total_length/2 ); 
     road.road_start = road.position.z - GRID_STEP_SZ*Chunk.total_length/2;
     road.road_end = road.position.z + GRID_STEP_SZ*Chunk.total_length/2;
+    road.visible = false;
     scene.add(road)
 }
 
@@ -196,21 +200,25 @@ function animate() {
  *  Helpers
  */
 
-function grabMesh( gcode ) {
+function grabMesh( _mesh, _mesh_type) {
     if (DEBUG == 1) console.log('Grabbing Mesh')
     // TODO: Implement GLTF Loading for 3D view
-    //let mesh_arr = [];
-    //gltf.scene.traverse( function (node) { if(node.isMesh) { 
-    //    node.material = new THREE.MeshBasicMaterial( 
-	//		{
-				//side: THREE.DoubleSide,
-				//color: COLOR_ACCENT, 
-				//wireframe: true
-    //        } );
-    //    node.scale.set(100,100,100);
-    //    mesh_arr.push(node); 
-    //} });
-    return gcode.children;
+    if ( _mesh_type == MeshType.GLTF ) {
+        let mesh_arr = [];
+        _mesh.scene.traverse( function (node) { if(node.isMesh) { 
+            node.material = new THREE.MeshBasicMaterial( 
+                {
+                    side: THREE.DoubleSide,
+                    color: COLOR_ACCENT, 
+                    wireframe: true
+                } );
+            node.scale.set(100,100,100);
+            mesh_arr.push(node); 
+        } });
+        return mesh_arr;
+    } else if ( _mesh_type == MeshType.GCODE ) {
+        return _mesh.children;
+    }
 }
 
 function leaveRoadChunk( road_map_idx ) {
@@ -286,6 +294,12 @@ function updateCameraView(aspect) {
     camera.updateProjectionMatrix();
 }
 
+function updateCameraClip(_near, _far) {
+    camera.near = _near;
+    camera.far = _far;
+    camera.updateProjectionMatrix();
+}
+
 function updateRendererSize(width, height) {
     renderer.setSize( width, height);
 }
@@ -330,10 +344,24 @@ function getCurrentScrollPos() {
     return scroll_plane.position.z;
 }
 
+function toggleState() {
+    if (state == State.TWO_D) {
+        state = State.THREE_D
+        updateCameraClip(-2000, 3000)
+        road.visible = true;
+    } else {
+        state = State.TWO_D;
+        updateCameraClip(-10, 10)
+        road.visible = false;
+    }
+    render()
+}
+
 function loaderLoad(path, caller) {
     loader.load(
         path, 
-        (gcode) => { caller.addMeshes(grabMesh(gcode)); }, 
+        (_mesh) => { caller.addMeshes(grabMesh(_mesh, 
+                    ((path.slice(path.indexOf(".")) == ".gcode") ? MeshType.GCODE : MeshType.GLTF))) }, 
         undefined, 
         (err)=>{console.log(`Error in loaderLoad ${err}`)}
         )
@@ -345,7 +373,8 @@ function render() {
 
 // EXPORT functionality for controller to modify this model
 export { addToAnimationQueue, moveScrollPlane, animateScrollPlane, getCurrentScrollPos, render, loaderLoad}
-export { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims }
+export { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims, updateCameraClip }
+export { toggleState, MeshType }
 export { 
         sceneSetup, 
         cameraSetup, 

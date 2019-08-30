@@ -37,7 +37,6 @@ THREE.GCodeLoader.prototype.parse = function ( data ) {
 
 	var state = { x: 0, y: 0, z: 0, e: 0, f: 0, extruding: false, relative: false };
 	var layers = [], shape_pts = [];
-
 	var currentLayer = undefined;
 
 	var pathMaterial = new THREE.LineBasicMaterial( { color: 0xFF0000 } );
@@ -69,16 +68,17 @@ THREE.GCodeLoader.prototype.parse = function ( data ) {
 		if ( line.extruding ) {
 			currentLayer.vertex.push( p1.x, p1.y, p1.z );
 			currentLayer.vertex.push( p2.x, p2.y, p2.z );
-			if ( p1.x == p2.x && p1.y == p2.y ) {
-				if ( shape_pts.length != 0 ) {
-					var temp = new THREE.Shape(shape_pts.splice(0));
-					currentLayer.shapes.push(temp)
-					shape_pts = []
-				}
-				shape_pts.push(new THREE.Vector2(p1.x,p1.y))
-        } else {
-            shape_pts.push(new THREE.Vector2(p2.x,p2.y))
-        }
+			// add new shape for separate part
+			//if ( p1.x == p2.x && p1.y == p2.y ) {
+			//	if ( shape_pts.length != 0 ) {
+			//		var temp = new THREE.Shape(shape_pts.splice(0));
+			//		currentLayer.shapes.push(temp)
+			//		shape_pts = []
+			//	}
+			//	shape_pts.push(new THREE.Vector2(p1.x,p1.y))
+			//} else {
+				shape_pts.push(new THREE.Vector2(p2.x,p2.y))
+			//}
 		} //else {
 		//	currentLayer.pathVertex.push( p1.x, p1.y, p1.z );
 		//	currentLayer.pathVertex.push( p2.x, p2.y, p2.z );

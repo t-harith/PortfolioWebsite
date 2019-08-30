@@ -20,8 +20,7 @@ function initTitle()
     this.onDeparture = sandwichFn(this.onDeparture.bind(this), ()=>{}, () => {console.log(`Departing ${this.getName()}`)})
 
     this.addAssetPath('3d_files/') 
-    //this.addAsset('tribot2.glb')
-    this.addAsset('PPHBED_tribot.gcode')
+    this.addAsset('PPHBED_tribot_4.gcode')
 }
 
 function initTransTitleAbt()

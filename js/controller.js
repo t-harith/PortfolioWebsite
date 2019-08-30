@@ -1,7 +1,7 @@
 'use strict';
 
 import { DEBUG, MAX_BACK_SCROLL_SPEED, MAX_FORW_SCROLL_SPEED, GRID_STEP_SZ } from "./modules/globals.js"
-import { moveScrollPlane, animateScrollPlane, render } from "./modules/model.js"
+import { moveScrollPlane, animateScrollPlane, render, toggleState } from "./modules/model.js"
 import { updateCameraView, updateRendererSize, updateScrollPlaneDims, updateRoadDims } from "./modules/model.js"
 import { AnimateTask } from './modules/AnimateTask.js'
 
@@ -12,6 +12,7 @@ document.querySelector("#view-button").addEventListener('click', viewChange)
 
 function viewChange() {
     if(DEBUG) console.log("In viewChange")
+    toggleState()
 }
  
 
