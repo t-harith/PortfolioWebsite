@@ -1,7 +1,7 @@
 'use strict';
 
 import { DEBUG, GRID_STEP_SZ } from './globals.js';
-import { loaderLoad, addToAnimationQueue } from './model.js';
+import { loaderLoad, addToAnimationQueue, MeshType } from './model.js';
 import { AnimateTask } from './AnimateTask.js';
 
 export class Chunk {
@@ -12,7 +12,8 @@ export class Chunk {
         this._offset = offset; 
         this._assets_path = [];
         this._assets_names = [];
-        this._mesh_array = [];
+        this.gcode_mesh_array = []; // layer indexing
+        this.gltf_mesh_array = [];
         this._prev_loc = undefined;
         
         Chunk.num_chunks++;
@@ -42,35 +43,55 @@ export class Chunk {
         }
     }
 
-    addMeshes(new_meshes) {
+    addMeshes(new_meshes, mesh_type) {
         if (DEBUG == 1) console.log(`Adding meshes to chunk ${this._name}`)
-        this._mesh_array.push(...new_meshes)
-        for (var i = 0; i < this._mesh_array.length; ++i) {
-            this._mesh_array[i].position.setZ(this._mesh_array[i].position.z +200+ this._offset*GRID_STEP_SZ+i);
-            console.log(this._mesh_array[i]) 
+        let mesh_array
+        if ( mesh_type == MeshType.GCODE ) {
+            mesh_array = this.gcode_mesh_array;
+            let start_index = mesh_array.length
+            mesh_array.push(...new_meshes)
+            for (var i = start_index; i < mesh_array.length; ++i) {
+                mesh_array[i].position.setZ(mesh_array[i].position.z + this._offset*GRID_STEP_SZ+i);
+            }
+        }
+        else if ( mesh_type == MeshType.GLTF ) {
+            mesh_array = this.gltf_mesh_array;
+            let start_index = mesh_array.length
+            mesh_array.push(...new_meshes)
+            for (var i = start_index; i < mesh_array.length; ++i) {
+                //TODO: Fix '+200' which is added to prevent objects being placed outside the chunk
+                mesh_array[i].position.setZ(mesh_array[i].position.z + 200 + this._offset*GRID_STEP_SZ);
+            }
         }
     }
 
     genDisplayMeshes(scene) {
         this.meshDisplay = function(scroll_plane) {
-            //TODO: Support both GCODE and GLTF in same chunk
+            //TODO: Support both GCODE and GLTF in same chunk [DONE]
             let sp_rel_pos = Math.abs(Math.floor(scroll_plane.position.z - GRID_STEP_SZ*this.offset()))
-            if(this._mesh_array.length > 0 & this._mesh_array.parent != scene) 
-                scene.add(this._mesh_array[0])
-            if (this._mesh_array.length >  sp_rel_pos) {
-                if ( this._prev_loc != undefined ) scene.remove(this._mesh_array[this._prev_loc])
-                scene.add(this._mesh_array[ this._prev_loc = sp_rel_pos])
+            if(this.gltf_mesh_array.length > 0 && this.gltf_mesh_array.active != true) {
+                this.gltf_mesh_array.forEach((ea)=>{scene.add(ea)})
+                this.gltf_mesh_array.active = true
+            }
+            if (this.gcode_mesh_array.length >  sp_rel_pos) {
+                if ( this._prev_loc != undefined ) scene.remove(this.gcode_mesh_array[this._prev_loc])
+                scene.add(this.gcode_mesh_array[ this._prev_loc = sp_rel_pos])
             } else
-                this.clearLastMesh(scene)
+                if (this._prev_loc != undefined ){ 
+                    scene.remove(this.gcode_mesh_array[this._prev_loc])
+                    this._prev_loc = undefined
+                }
         }
         return this.meshDisplay.bind(this)
     }
 
     clearLastMesh(scene) {
         if (this._prev_loc != undefined ){ 
-            scene.remove(this._mesh_array[this._prev_loc])
+            scene.remove(this.gcode_mesh_array[this._prev_loc])
             this._prev_loc = undefined
         }
+        this.gltf_mesh_array.forEach((ea)=>{scene.remove(ea)})
+        this.gltf_mesh_array.active = false;
     }
 
     offset(new_offset) {

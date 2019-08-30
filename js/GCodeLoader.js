@@ -20,20 +20,19 @@ THREE.GCodeLoader = function ( manager ) {
 
 };
 
-THREE.GCodeLoader.prototype.load = function ( url, onLoad, onProgress, onError ) {
+THREE.GCodeLoader.prototype.load = function ( url, output_color, onLoad, onProgress, onError ) {
 
 	var self = this;
-
 	var loader = new THREE.FileLoader( self.manager );
-	loader.load( url, function ( text ) {
+	loader.load( url,  function ( text ) {
 
-		onLoad( self.parse( text ) );
+		onLoad( self.parse( text, output_color ) );
 
 	}, onProgress, onError );
 
 };
 
-THREE.GCodeLoader.prototype.parse = function ( data ) {
+THREE.GCodeLoader.prototype.parse = function ( data, _color ) {
 
 	var state = { x: 0, y: 0, z: 0, e: 0, f: 0, extruding: false, relative: false };
 	var layers = [], shape_pts = [];
@@ -43,7 +42,7 @@ THREE.GCodeLoader.prototype.parse = function ( data ) {
 	pathMaterial.name = 'path';
 
 	//var extrudingMaterial = new THREE.LineBasicMaterial( { color: 0x00FF00 } );
-	var extrudingMaterial = new THREE.MeshBasicMaterial( { color: 0x00FF00, side: THREE.DoubleSide } );
+	var extrudingMaterial = new THREE.MeshBasicMaterial( { color: _color, side: THREE.DoubleSide } );
 	extrudingMaterial.name = 'extruded';
 
 	function newLayer( line ) {
@@ -69,16 +68,16 @@ THREE.GCodeLoader.prototype.parse = function ( data ) {
 			currentLayer.vertex.push( p1.x, p1.y, p1.z );
 			currentLayer.vertex.push( p2.x, p2.y, p2.z );
 			// add new shape for separate part
-			//if ( p1.x == p2.x && p1.y == p2.y ) {
-			//	if ( shape_pts.length != 0 ) {
-			//		var temp = new THREE.Shape(shape_pts.splice(0));
-			//		currentLayer.shapes.push(temp)
-			//		shape_pts = []
-			//	}
-			//	shape_pts.push(new THREE.Vector2(p1.x,p1.y))
-			//} else {
+			if ( p1.x == p2.x && p1.y == p2.y ) {
+				if ( shape_pts.length != 0 ) {
+					var temp = new THREE.Shape(shape_pts.splice(0));
+					currentLayer.shapes.push(temp)
+					shape_pts = []
+				}
+				shape_pts.push(new THREE.Vector2(p1.x,p1.y))
+			} else {
 				shape_pts.push(new THREE.Vector2(p2.x,p2.y))
-			//}
+			}
 		} //else {
 		//	currentLayer.pathVertex.push( p1.x, p1.y, p1.z );
 		//	currentLayer.pathVertex.push( p2.x, p2.y, p2.z );

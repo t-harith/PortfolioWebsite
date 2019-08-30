@@ -23,7 +23,8 @@ const MeshType = { GLTF: 0, GCODE: 1}
 
 let animation_queue = []
 let scroll_plane
-let scene, camera, renderer, road, roadMap, loader, controls, state
+let scene, camera, renderer, road, roadMap, controls, state
+let gltf_loader, gcode_loader
 
 function sceneSetup() {
     if (DEBUG == 1) console.log("Scene Setup")
@@ -34,7 +35,14 @@ function sceneSetup() {
 function cameraSetup() {
     if (DEBUG == 1) console.log("Camera Setup")
     let aspect = window.innerWidth/window.innerHeight
-    camera = new THREE.OrthographicCamera(1000*(aspect/-2), 1000*(aspect/2), 1000/2, 1000/-2, -10, 10)
+    camera = new THREE.OrthographicCamera(
+        1000*(aspect/-2),
+        1000*(aspect/2), 
+        1000/2, 
+        1000/-2, 
+        -camera_start.z, 
+        -camera_start.z + 5
+        )
     camera.position.set(camera_start.x, camera_start.y, camera_start.z)
     camera.updateProjectionMatrix();
     if (DEBUG == 1) console.log(`Camera is at (${camera.position.x}, ${camera.position.y}, ${camera.position.z}).`)
@@ -51,9 +59,9 @@ function renderSetup() {
 
 function loadLoader() {
     if (DEBUG == 1) console.log("Loading GLTF Loader")
-    loader = new THREE.GLTFLoader()
-    //loader = new THREE.GCodeLoader()
-    loader.splitLayer = true;
+    gltf_loader = new THREE.GLTFLoader()
+    gcode_loader = new THREE.GCodeLoader()
+    gcode_loader.splitLayer = true;
 }
 
 function initRoadMap() {
@@ -210,9 +218,9 @@ function grabMesh( _mesh, _mesh_type) {
                 {
                     side: THREE.DoubleSide,
                     color: COLOR_ACCENT, 
-                    wireframe: true
+                    wireframe: false
                 } );
-            node.scale.set(100,100,100);
+            node.scale.set(10,10,10);
             mesh_arr.push(node); 
         } });
         return mesh_arr;
@@ -351,20 +359,33 @@ function toggleState() {
         road.visible = true;
     } else {
         state = State.TWO_D;
-        updateCameraClip(-10, 10)
+        updateCameraClip(1000,1005)
         road.visible = false;
     }
     render()
 }
 
 function loaderLoad(path, caller) {
-    loader.load(
-        path, 
-        (_mesh) => { caller.addMeshes(grabMesh(_mesh, 
-                    ((path.slice(path.indexOf(".")) == ".gcode") ? MeshType.GCODE : MeshType.GLTF))) }, 
-        undefined, 
-        (err)=>{console.log(`Error in loaderLoad ${err}`)}
-        )
+    let ftype = path.indexOf(".")
+    console.log(path.substring(ftype))
+    if (path.substring(ftype) == ".gcode") {
+        gcode_loader.load(
+            path, 
+            COLOR_ACCENT, 
+            (_mesh) => { caller.addMeshes(grabMesh(_mesh, MeshType.GCODE), MeshType.GCODE) }, 
+            undefined, 
+            (err)=>{console.log(`Error in loaderLoad ${err}`)}
+            )
+    } else if ( path.substring(ftype) == ".glb" || path.substring(ftype) == ".gltf") {
+        gltf_loader.load(
+            path, 
+            (_mesh) => { caller.addMeshes(grabMesh(_mesh, MeshType.GLTF), MeshType.GLTF) }, 
+            undefined, 
+            (err)=>{console.log(`Error in loaderLoad ${err}`)}
+            )
+    } else {
+        console.error(`Unsupported File Type ${path.substring(ftype)}`)
+    }
 }
 
 function render() {
