@@ -74,13 +74,13 @@ function initRoadMap() {
     }
     
     // TODO: For now manually input new chunks here, later change to parsing a chunk file
-    roadMap.push(new Chunk("Lead", 10, roadMap.end, initLead)) // Lead of runway
-    roadMap.push(new Vista("Title", 20, 10, roadMap.end, initTitle)) // Name title
-    roadMap.push(new Chunk("Title -> About Me", 50, roadMap.end, initTransTitleAbt)) // Transition: title -> about me
-    roadMap.push(new Vista("About Me", 20, 5, roadMap.end, initAboutMe)) // About Me
-    roadMap.push(new Chunk("About Me -> Projects", 20, roadMap.end, initTransAbtProj)) // Transition: about me -> projects
-    roadMap.push(new Vista("Projects", 20, 15, roadMap.end, initProjects)) // Projects
-    roadMap.push(new Chunk("Future", 100, roadMap.end, initFuture)) // Road work ahead 
+    roadMap.push(new Chunk("lead", 10, roadMap.end, initLead)) // Lead of runway
+    roadMap.push(new Vista("title", 20, 10, roadMap.end, initTitle)) // Name title
+    roadMap.push(new Chunk("title-about-me", 50, roadMap.end, initTransTitleAbt)) // Transition: title -> about me
+    roadMap.push(new Vista("about-me", 20, 5, roadMap.end, initAboutMe)) // About Me
+    roadMap.push(new Chunk("about-me-projects", 20, roadMap.end, initTransAbtProj)) // Transition: about me -> projects
+    roadMap.push(new Vista("projects", 20, 15, roadMap.end, initProjects)) // Projects
+    roadMap.push(new Chunk("future", 100, roadMap.end, initFuture)) // Road work ahead 
 
     if (DEBUG == 1) console.log(`${Chunk.numChunks} chunks added to Roadmap`)
 }
@@ -116,10 +116,12 @@ function loadScrollPlane() {
     scroll_plane.road_map_idx = 0;
     scroll_plane.listeners = [];
     scroll_plane.addListener = (func) => { 
-        func.id = (scroll_plane.listeners.length == 0) ? 1 : 
-            scroll_plane.listeners[scroll_plane.listeners.length-1].id + 1
-        scroll_plane.listeners.push(func)
-        return func.id;
+        if ( func != undefined ) {
+            func.id = (scroll_plane.listeners.length == 0) ? 1 : 
+                scroll_plane.listeners[scroll_plane.listeners.length-1].id + 1
+            scroll_plane.listeners.push(func)
+            return func.id;
+        }
     }
     scroll_plane.removeListener = (func) => {
         if ( func == undefined ) return; 
@@ -188,6 +190,7 @@ function genControls() {
     if (DEBUG == 1) console.log("Initial Render of Scene")
     controls = new THREE.OrbitControls(camera, renderer.domElement)
     controls.addEventListener('change', render)
+    controls.enabled = false;
 }
 
 function animate() {
@@ -220,7 +223,11 @@ function grabMesh( _mesh, _mesh_type) {
                     color: COLOR_ACCENT, 
                     wireframe: false
                 } );
-            node.scale.set(10,10,10);
+            //TODO: Some standardized approach to scaling and rotating meshes
+            node.scale.set(2, 2, 2);
+            node.rotation.x += -Math.PI/2
+            node.position.y -= 650
+            node.position.x += 150
             mesh_arr.push(node); 
         } });
         return mesh_arr;
@@ -234,14 +241,20 @@ function leaveRoadChunk( road_map_idx ) {
     // load meshes
     scroll_plane.removeListener(roadMap[road_map_idx].meshDisplay)
     roadMap[road_map_idx].clearLastMesh(scene);
+    //scroll_plane.removeListener(roadMap[road_map_idx].domDisplay)
     if (roadMap[road_map_idx].onDeparture != undefined) roadMap[road_map_idx].onDeparture();
 }
 
 function enterRoadChunk( road_map_idx ) {
     if (DEBUG == 1) console.log(`Entering road chunk ${roadMap[road_map_idx].getName()}`)
     // load meshes
-    var id = scroll_plane.addListener(roadMap[road_map_idx].genDisplayMeshes(scene))
+    var id;
+    id = scroll_plane.addListener(roadMap[road_map_idx].genDisplayMeshes(scene))
     roadMap[road_map_idx].meshDisplay.id  = id
+    //if(roadMap[road_map_idx].genDOMElems != undefined) {
+    //    id = scroll_plane.addListener(roadMap[road_map_idx].genDOMElems(window))
+    //    roadMap[road_map_idx].domDisplay.id = id
+    //}
     if (roadMap[road_map_idx].onArrival != undefined) roadMap[road_map_idx].onArrival();
 }
 
@@ -354,12 +367,17 @@ function getCurrentScrollPos() {
 
 function toggleState() {
     if (state == State.TWO_D) {
-        state = State.THREE_D
+        state = State.THREE_D;
+        controls.enabled = false;
         updateCameraClip(-2000, 3000)
         road.visible = true;
     } else {
         state = State.TWO_D;
+        controls.enabled = false;
         updateCameraClip(1000,1005)
+        camera.position.set(camera_start.x, camera_start.y, getCurrentScrollPos() + camera_start.z); 
+        camera.lookAt(scroll_plane.position)
+        camera.updateProjectionMatrix();
         road.visible = false;
     }
     render()
@@ -367,7 +385,6 @@ function toggleState() {
 
 function loaderLoad(path, caller) {
     let ftype = path.indexOf(".")
-    console.log(path.substring(ftype))
     if (path.substring(ftype) == ".gcode") {
         gcode_loader.load(
             path, 

@@ -33,13 +33,13 @@ function callScroll( val ) {
  *  Mouse Wheel
  */
 let mouse_wheel_text 
-if (DEBUG) {
-        mouse_wheel_text = document.body.appendChild(
-            document.createElement("P").appendChild(
-                document.createTextNode("Mouse Wheel Delta: --")))
-
-        mouse_wheel_text.parentElement.id = "mouse-wheel-text";
-} 
+//if (DEBUG) {
+//        mouse_wheel_text = document.body.appendChild(
+//            document.createElement("P").appendChild(
+//                document.createTextNode("Mouse Wheel Delta: --")))
+//
+//        mouse_wheel_text.parentElement.id = "mouse-wheel-text";
+//} 
 
 window.addEventListener('mousewheel',  mouseWheelListener);
 
@@ -47,7 +47,7 @@ export function mouseWheelListener( event ) {
         let delta = (event.wheelDelta > MAX_FORW_SCROLL_SPEED) ? MAX_FORW_SCROLL_SPEED : 
                     (event.wheelDelta < -MAX_BACK_SCROLL_SPEED) ? -MAX_BACK_SCROLL_SPEED: event.wheelDelta;
         moveScrollPlane(delta);
-        if(DEBUG == 1) mouse_wheel_text.textContent = `Mouse Wheel Delta: ${delta}`;
+        //if(DEBUG == 1) mouse_wheel_text.textContent = `Mouse Wheel Delta: ${delta}`;
         render();
 }
 

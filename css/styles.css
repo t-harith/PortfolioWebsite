@@ -1,26 +1,141 @@
 
-#test_button {
+:root {
+	--color-dark: #372C2E;
+	--color-mild: #563727;
+	--color-light: #FFFFFF;
+	--color-bold: #7A431D;
+	--color-accent: #DE9E48;
+}
+
+#title {
+	opacity: 0;
 	position: absolute;
+	text-align: center;
+	top: 50%;
+	left: 50%;
+	transform: translateX(-50%)
+}
+
+#title .subtitle {
+	font: normal 30px/1 Tahoma, Geneva, sans-serif;
+	position: relative;
+	z-index: 1;
+	float: none;
+	background: transparent;
+	color: var(--color-accent);
+}
+
+#title .descriptors {
+	font: normal 20px/1 Tahoma, Geneva, sans-serif;
+	position: relative;
+	float: none;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-light);
+}
+
+#about-me {
+	opacity: 0;
+	position: absolute;
+	text-align: center;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+#about-me .heading {
+	font: normal 30px/1 Tahoma, Geneva, sans-serif;
+	position: relative;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-accent);
+}
+
+#about-me .bio {
+	position: relative;
+	text-align: right;
+	right: 25%;
+	width: 200px;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-light);
+}
+
+#about-me .hobbies {
+	position: relative;
+	text-align: left;
+	left: 75%;
+	top: -100px;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-light);
+}
+
+#about-me .interests {
+	position: relative;
+	text-align: right;
+	right: 25%;
+	width: 200px;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-light);
+}
+
+#about-me .social {
+	position: relative;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-light);
+}
+
+#projects {
+	opacity: 0;
+	position: absolute;
+	text-align: center;
+	top: 50%;
+	left: 50%;
+	transform: translateX(-50%)
+}
+
+#projects .heading {
+	font: normal 30px/1 Tahoma, Geneva, sans-serif;
+	position: relative;
+	float: none;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-accent);
+}
+
+#projects .blurb {
+	position: relative;
+	float: none;
+	z-index: 1;
+	background: transparent;
+	color: var(--color-light);
+}
+
+#view-button {
+	position: fixed;
 	top: 10px;
 	width: 100%;
 	text-align: center;
-	z-index: 1;
+	z-index: 5;
 	display: block;
 	background: transparent;
-	color: red;
+	color: var(--color-mild);
 	border-color: transparent;
 	outline: none;
 }
 
-#keep_scrolling_button {
-	position: absolute;
+#scroll-button {
+	position: fixed;
 	bottom: 10px;
 	width: 100%;
 	text-align: center;
-	z-index: 0;
+	z-index: 5;
 	display: block;
 	background: transparent;
-	color: lightpink;
+	color: var(--color-accent);
 	border-color: transparent;
 	outline: none;
 }

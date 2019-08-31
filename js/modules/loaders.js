@@ -21,7 +21,7 @@ function initTitle()
 
     this.addAssetPath('3d_files/') 
     //this.addAsset('PPHBED_cup.gcode')
-    this.addAsset('city.glb')
+    this.addAsset('tribot2.glb')
 }
 
 function initTransTitleAbt()
@@ -32,8 +32,12 @@ function initTransTitleAbt()
 
 function initAboutMe()
 {
-
     if (DEBUG == 1) console.log("Initializing About Me Chunk")
+    this.onArrival = sandwichFn(this.onArrival.bind(this), () => {console.log(`Arriving ${this.getName()}`)})
+    this.onDeparture = sandwichFn(this.onDeparture.bind(this), ()=>{}, () => {console.log(`Departing ${this.getName()}`)})
+
+    this.addAssetPath('3d_files/') 
+    this.addAsset('dave.glb')
 }
 
 function initTransAbtProj()

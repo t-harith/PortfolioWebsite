@@ -11,8 +11,20 @@ export class Vista extends Chunk {
     constructor(name, length, stop_pos, offset, _onLoad, _onArrival, _onDeparture) {
         super(name, length, offset, _onLoad); 
         this._stop_pos = stop_pos;
-        this.onArrival = sandwichFn( _onArrival, arrivalSlowDown(name, GRID_STEP_SZ*(offset + stop_pos)), ()=>{});
-        this.onDeparture = sandwichFn( _onDeparture, departSlowDown(name, GRID_STEP_SZ*(offset + stop_pos)), () => {});
+        this.onArrival = sandwichFn( _onArrival, arrivalSlowDown(name, GRID_STEP_SZ*(offset + stop_pos)), genLaunchDOMs(name));
+        this.onDeparture = sandwichFn( _onDeparture, departSlowDown(name, GRID_STEP_SZ*(offset + stop_pos)), genClearDOMs(name));
+        //this.boot = false;
+    }
+
+    genDOMElems(window) {
+        this.domDisplay = function(scroll_plane) {
+            if ( this.boot == false && Math.abs(getCurrentScrollPos() - GRID_STEP_SZ*(this._offset + this._stop_pos)) < 100 ) {
+                //console.log("<_@@#@#@#>")
+                //$("#test").delay(1000).animate({"opacity": "1"}, 700);
+                //this.boot = true;
+            }
+        }
+        return this.domDisplay.bind(this)
     }
 
 }
@@ -68,5 +80,17 @@ function approachStopPos(name, stop_pos, offset) {
             ()=>{ moveScrollPlane(5*dir); },
             ()=>{window.addEventListener("mousewheel", mouseWheelListener)}
             ))
+    }
+}
+
+function genLaunchDOMs(_name) {
+    return ()=>{
+        $(`#${_name}`).delay(200).animate({"opacity": "1"}, 700);
+    }
+}
+
+function genClearDOMs(_name) {
+    return ()=>{
+        $(`#${_name}`).delay(200).animate({"opacity": "0"}, 700);
     }
 }
