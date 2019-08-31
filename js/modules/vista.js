@@ -85,12 +85,24 @@ function approachStopPos(name, stop_pos, offset) {
 
 function genLaunchDOMs(_name) {
     return ()=>{
-        $(`#${_name}`).delay(200).animate({"opacity": "1"}, 700);
+        $(`#${_name}`).scrollTop($(`#${_name}`).attr('last-scroll'))
+        $(`#${_name}`).delay(200).animate({"opacity": "1"}, 
+            700,
+            "swing",
+            ()=>{$(`#${_name}`).attr('class', `scrollable`);}
+        );
+        
     }
 }
 
 function genClearDOMs(_name) {
     return ()=>{
-        $(`#${_name}`).delay(200).animate({"opacity": "0"}, 700);
+        $(`#${_name}`).delay(200).animate({"opacity": "0"}, 
+            700,
+            "swing",
+            ()=>{$(`#${_name}`).attr('class', `not-scrollable`);}
+        );
+        $(`#${_name}`).attr('last-scroll',$(`#${_name}`).scrollTop());
     }
+
 }
